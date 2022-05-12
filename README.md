@@ -1,2 +1,2 @@
 # comut
-source code for the comut web application
+source code for the comut web application at https://lccl.shinyapps.io/comut/.
