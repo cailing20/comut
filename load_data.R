@@ -40,7 +40,6 @@ test.comut<-function(g1,g2,include.CNA){
   beautify.dt(by_cancer.df)
 }
 plot.gene<-function(g1,g2,by_cancer.df){
-  by_cancer.df[,`log10(total)`:=round(log10(total),3)]
   df <- expand.grid(x=x, y=x) #grid for colors
   df$expected<-df$x*df$y
   by_cancer.df[,`log10(total)`:=round(log10(total),4)]
