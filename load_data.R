@@ -1,5 +1,78 @@
 load('data/input.RData')
 result.list<-readRDS('data/screen_results.rds')
+sketch.gp<-htmltools::withTags(table(
+  class = 'display',
+  thead(
+    tr(
+      th('co-mutation', title = 'co-mutation'),
+      th('overall.comut.frac', title = 'co-mutation frequency across all samples regardless of cancer type'),
+      th('concurrent.pv.sig', title = "number of cancer types with this gene pair concurrently mutated as assessed by Fisher's exact test, with nominal p-value < 0.05"),
+      th('concurrent.padj.sig', title = "number of cancer types with this gene pair concurrently mutated as assessed by Fisher's exact test, with Benjamini-Hochberg procedure adjusted p-value < 0.05"),
+      th('exclusive.pv.sig', title = "number of cancer types with this gene pair mutually exclusively mutated as assessed by Fisher's exact test, with nominal p-value < 0.05"),
+      th('exclusive.padj.sig', title = "number of cancer types with this gene pair mutually exclusively  mutated as assessed by Fisher's exact test, with Benjamini-Hochberg procedure adjusted p-value < 0.05")
+    )
+  )
+))
+sketch.type<-htmltools::withTags(table(
+  class = 'display',
+  thead(
+    tr(
+      th('CANCER_TYPE_DETAILED', title = 'detailed cancer types'),
+      th('avg.total', title = 'averaged total cases belonging to the specific cancer type (the total cases vary by gene pair due to variable coverage of gene panels)'),
+      th('concurrent.pv.sig', title = "number of gene pairs from this cancer type that were found to be concurrently mutated as assessed by Fisher's exact test, with nominal p-value < 0.05"),
+      th('concurrent.padj.sig', title = "number of gene pairs from this cancer type that were found to be concurrently mutated as assessed by Fisher's exact test, with Benjamini-Hochberg procedure adjusted p-value < 0.05"),
+      th('exclusive.pv.sig', title = "number of gene pairs from this cancer type that were found to be mutually exclusively mutated as assessed by Fisher's exact test, with nominal p-value < 0.05"),
+      th('exclusive.padj.sig', title = "number of gene pairs from this cancer type that were found to be mutually exclusively  mutated as assessed by Fisher's exact test, with Benjamini-Hochberg procedure adjusted p-value < 0.05")
+    )
+  )
+))
+sketch.full<-htmltools::withTags(table(
+  class = 'display',
+  thead(
+    tr(
+      th('co-mutation', title = 'gene pair assessed for co-mutation'),
+      th('CANCER_TYPE_DETAILED', title = 'detailed cancer types'),
+      th('comutant', title = 'number of samples with mutations in both genes'),
+      th('g1_mutant', title = "number of samples with mutation in gene 1"),
+      th('g2_mutant', title = "number of samples with mutation in gene 2"),
+      th('total', title = "total number of samples from this cancer type that were included in panels that covered both genes"),
+      th('co.frac',title="fraction of samples with co-mutations"),
+      th('g1.frac',title="fraction of samples with mutations in gene 1"),
+      th('g2.frac',title="fraction of samples with mutations in gene 2"),
+      th('co.pv', title = "nominal p-value from Fisher's exact test for concurrent mutations"),
+      th('co.adj', title = "p-value from Fisher's exact test for concurrent mutations adjusted for multiple comparisons by Benjamini-Hochberg procedures"),
+      th('exclusive.pv', title = "nominal p-value from Fisher's exact test for mutually exclusive mutations"),
+      th('exclusive.padj', title = "p-value from Fisher's exact test for mutually exclusive mutations adjusted for multiple comparisons by Benjamini-Hochberg procedures"),
+      th('sig.level',title = "indicate whether the co-mutation is significant only by nominal p-value < 0.05 or remain significant after controlling for multiple comparison (p.adj < .05)"),
+      th('occurrence',title='co-mutation pattern (concurrent or mutually exclusive)')
+      
+    )
+  )
+))
+sketch.adhoc<-htmltools::withTags(table(
+  class = 'display',
+  thead(
+    tr(
+      th('CANCER_TYPE_DETAILED', title = 'detailed cancer types'),
+      th('comutant', title = 'number of samples with mutations in both genes'),
+      th('g1_mutant', title = "number of samples with mutation in gene 1"),
+      th('g2_mutant', title = "number of samples with mutation in gene 2"),
+      th('total', title = "total number of samples from this cancer type that were included in panels that covered both genes"),
+      th('co.frac',title="fraction of samples with co-mutations"),
+      th('g1.frac',title="fraction of samples with mutations in gene 1"),
+      th('g2.frac',title="fraction of samples with mutations in gene 2"),
+      th('g1_mut_given_g2_mut',title="fraction of mutations in gene 1 given in samples with mutations in gene2"),
+      th('g2_mut_given_g1_mut',title="fraction of mutations in gene 2 given in samples with mutations in gene1"),
+      th('co.pv', title = "nominal p-value from Fisher's exact test for concurrent mutations"),
+      th('exclusive.pv', title = "nominal p-value from Fisher's exact test for mutually exclusive mutations"),
+      th('co.adj', title = "p-value from Fisher's exact test for concurrent mutations adjusted for multiple comparisons by Benjamini-Hochberg procedures"),
+      th('exclusive.padj', title = "p-value from Fisher's exact test for mutually exclusive mutations adjusted for multiple comparisons by Benjamini-Hochberg procedures"),
+      th('sig.level',title = "indicate whether the co-mutation is significant only by nominal p-value < 0.05 or remain significant after controlling for multiple comparison (p.adj < .05)"),
+      th('occurrence',title='co-mutation pattern (concurrent or mutually exclusive)')
+      
+    )
+  )
+))
 beautify.dt<-function(dt,pv.key=NULL){
   if(is.data.frame(dt) & !is.data.table(dt)) {df<-T;dt.rname<-rownames(dt);setDT(dt)} else df<-F
   num.col<-which(apply(as.matrix(dt),2,FUN=function(x) identical(is.na(x),is.na(as.numeric(x)))))
@@ -40,6 +113,7 @@ test.comut<-function(g1,g2,include.CNA){
   beautify.dt(by_cancer.df)
 }
 plot.gene<-function(g1,g2,by_cancer.df){
+  x <- seq(0,1,length.out=101)
   df <- expand.grid(x=x, y=x) #grid for colors
   df$expected<-df$x*df$y
   by_cancer.df[,`log10(total)`:=round(log10(total),4)]
@@ -55,5 +129,5 @@ plot.gene<-function(g1,g2,by_cancer.df){
     theme_classic()+theme(legend.position = 'bottom')+
     xlab(paste('Fraction with',g1,'alteration'))+ylab(paste('Fraction with',g2,'alteration'))+ labs(fill = "Fraction with alterations in both genes",size="Number of patients")+
     ggtitle(paste0("Analysis of ",g1," and ",g2, " alterations by ",length(by_cancer.df[total>4][['total']])," cancer types in ",comma(sum(by_cancer.df[total>4][['total']]))," patients from the AACR GENIE 11.0 data"))
-
+  
 }
